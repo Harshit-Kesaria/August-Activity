@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GCC Weekly Quiz</title>
+  <style>
+    :root{
+      --border:rgba(140,170,255,.18);
+      --text:#e8efff;
+      --muted:#a9b7d6;
+      --accent:#8b5cf6;
+      --accent2:#60a5fa;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 600px at 40% 10%, rgba(96,165,250,.15), transparent 60%),
+        radial-gradient(900px 500px at 80% 40%, rgba(139,92,246,.18), transparent 55%),
+        linear-gradient(180deg, #050816, #060a14 60%, #030510);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 48px auto;
+      padding: 0 18px;
+      text-align:center;
+    }
+    header{ margin-bottom:18px; }
+    h1{ margin:0 0 6px; font-size:34px; letter-spacing:.2px; }
+    .subtitle{ margin:0; color:var(--muted); font-size:15px; }
+    .card{
+      display:inline-block;
+      text-align:left;
+      width: min(760px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-inner{ padding:18px; }
+    .stats{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+      justify-content:center;
+    }
+    .pill{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px; border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(5,10,25,.35);
+      color:var(--muted);
+      min-width:160px;
+    }
+    .pill b{ color:var(--text); font-weight:600; }
+    .progress{
+      height:10px; width:100%;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      overflow:hidden;
+      margin: 8px 0 18px;
+    }
+    .bar{
+      height:100%; width:0%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width .2s ease;
+    }
+    .q-title{ margin:0 0 6px; font-size:20px; line-height:1.25; text-align:center; white-space:pre-line; }
+    .q-help{ margin:0 0 14px; color:var(--muted); font-size:13.5px; text-align:center; }
+    .answers{ display:flex; flex-direction:column; gap:12px; }
+    button.answer{
+      text-align:left; width:100%;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(6,10,20,.42);
+      color: var(--text);
+      cursor:pointer;
+      font-size: 15px;
+      transition: transform .05s ease, border-color .15s ease, background .15s ease;
+    }
+    button.answer:hover{
+      border-color: rgba(140,170,255,.33);
+      transform: translateY(-1px);
+      background: rgba(8,14,30,.55);
+    }
+    button.answer:disabled{ cursor:not-allowed; opacity:.9; }
+    .answer.good{ border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.12); }
+    .answer.bad{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.10); }
+    .row{
+      display:flex; gap:10px;
+      align-items:center; justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:14px; padding-top:14px;
+      border-top: 1px solid rgba(140,170,255,.12);
+    }
+    .btn{
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(96,165,250,.12);
+      color: var(--text);
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn:hover{ border-color: rgba(140,170,255,.33); }
+    .btn:disabled{ cursor:not-allowed; opacity:.55; }
+    .toast{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:18px;
+      line-height:1.35;
+      text-align:center;
+    }
+    .toast strong{ color: var(--text); }
+
+    /* Modal */
+    .modal-bg {
+      position:fixed; inset:0;
+      background:rgba(10,16,32,.85);
+      z-index:1000;
+      display:flex; align-items:center; justify-content:center;
+      padding: 18px;
+    }
+    .modal {
+      background: #10172a;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 28px 22px 20px;
+      max-width: 360px;
+      width: 100%;
+      text-align:center;
+      border:1px solid var(--border);
+    }
+    .modal h2{ margin:0 0 14px; font-size:20px; }
+    .modal label {
+      display:block;
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:4px;
+      text-align:left;
+    }
+    .modal input {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      margin-bottom:14px;
+      font-size:15px;
+      outline:none;
+    }
+    /* NEW: dropdown styled like input */
+    .modal select {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      margin-bottom:14px;
+      font-size:15px;
+      outline:none;
+    }
+    .modal select option{
+      background:#10172a;
+      color:var(--text);
+    }
+
+    .modal .btn { width:100%; font-size:16px; }
+    .modal .error {
+      color:var(--bad);
+      font-size:13px;
+      margin: 2px 0 10px;
+      min-height:18px;
+      text-align:left;
+    }
+    .modal .hint{
+      color:var(--muted);
+      font-size:12.5px;
+      margin-top:10px;
+      line-height:1.35;
+      text-align:left;
+    }
+    .domain{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: rgba(96,165,250,.95);
+    }
+    /* Hide "Correct" and "Score" from users (still calculated/submitted) */
+    .pill.hide { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>GCC Weekly Quiz</h1>
+      <p class="subtitle">Answer quickly for a time bonus.</p>
+    </header>
+
+    <section class="card">
+      <div class="card-inner">
+        <div class="stats">
+          <div class="pill">Question: <b id="statQ">1 / 5</b></div>
+          <div class="pill hide">Correct: <b id="statC">0</b></div>
+          <div class="pill">Time left: <b><span id="statT">30</span> s</b></div>
+          <div class="pill hide">Score: <b id="statS">0</b></div>
+        </div>
+
+        <div class="progress"><div class="bar" id="bar"></div></div>
+
+        <h3 class="q-title" id="qTitle">Please enter your details to begin</h3>
+        <p class="q-help" id="qHelp"></p>
+        <div class="answers" id="answers"></div>
+
+        <div class="row">
+          <button class="btn" id="btnSubmit" type="button" disabled>Submit result</button>
+        </div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </section>
+
+    <!-- Mandatory details modal -->
+    <div class="modal-bg" id="modalBg">
+      <form class="modal" id="modalForm" autocomplete="off">
+        <h2>Enter your details to begin</h2>
+        <div class="error" id="modalError"></div>
+
+        <!-- NEW: Team dropdown -->
+        <label for="modalTeam">Team Name</label>
+        <select id="modalTeam" required>
+          <option value="" selected disabled>Select your team</option>
+          <option value="Team Fusion Force">Team Fusion Force</option>
+          <option value="Team SyKnights">Team SyKnights</option>
+          <option value="Team Sparks">Team Sparks</option>
+          <option value="Team Kings">Team Kings</option>
+          <option value="Team Vibe Sprint">Team Vibe Sprint</option>
+          <option value="Team Ninjas">Team Ninjas</option>
+          <option value="Team Untitled">Team Untitled</option>
+          <option value="Team Mavericks">Team Mavericks</option>
+        </select>
+
+        <label for="modalName">Name</label>
+        <input id="modalName" type="text" maxlength="60" required autocomplete="name" />
+
+        <label for="modalEmail">Email</label>
+        <input id="modalEmail" type="email" maxlength="80" required autocomplete="email"
+               placeholder="firstname.lastname@syensqo.com" />
+
+        <button class="btn" type="submit">Start Quiz</button>
+
+        <div class="hint">
+          Email must end with <span class="domain">@syensqo.com</span>.
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const POWER_AUTOMATE_POST_URL =
+    "https://default5e60f7a7d4104d38b87593ca12adc3.0e.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/899b9a3c914541c0af2719bf77613032/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=orFxomxolOpdOCpoEiZ4V-xVhRuhx8oNCAcIWGHFjCs";
+
+  const ALLOWED_DOMAIN = "syensqo.com";
+
+  const QUIZ = [
+    {
+      text: "Which is the largest ocean in the world?",
+      options: ["Atlantic Ocean","Indian Ocean","Pacific Ocean","Arctic Ocean"],
+      correctIndex: 2
+    },
+    {
+      text: "What is the chemical formula of common salt?",
+      options: ["H2O","CO2","NACL","O2"],
+      correctIndex: 2
+    },
+    {
+      text: "Which is the smallest prime number?",
+      options: ["0", "1", "2", "3"],
+      correctIndex: 2
+    },
+    {
+      text: "What is the value of 9 X 8?",
+      options: ["64", "72", "81", "89"],
+      correctIndex: 1
+    },
+    {
+      text: "Which continent is known as the Dark Continent?",
+      options: ["Africa", "Europe", "Asia", "South America"],
+      correctIndex: 0
+    }
+  ];
+
+  function getISOWeekId(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  function isAllowedEmail(email) {
+    const e = String(email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return false;
+    return e.endsWith("@" + ALLOWED_DOMAIN);
+  }
+
+  function submissionKeyForThisWeek() {
+    return `weeklyQuizSubmitted_${getISOWeekId(new Date())}`;
+  }
+  function hasSubmitted() { return localStorage.getItem(submissionKeyForThisWeek()) === "1"; }
+  function markSubmitted() { localStorage.setItem(submissionKeyForThisWeek(), "1"); }
+
+  // ---- Elements ----
+  const elQ = document.getElementById("statQ");
+  const elC = document.getElementById("statC");
+  const elT = document.getElementById("statT");
+  const elS = document.getElementById("statS");
+  const elBar = document.getElementById("bar");
+  const elTitle = document.getElementById("qTitle");
+  const elHelp = document.getElementById("qHelp");
+  const elAns = document.getElementById("answers");
+  const btnSubmit = document.getElementById("btnSubmit");
+  const elToast = document.getElementById("toast");
+  const modalBg = document.getElementById("modalBg");
+  const modalForm = document.getElementById("modalForm");
+  const modalTeam = document.getElementById("modalTeam"); // NEW
+  const modalName = document.getElementById("modalName");
+  const modalEmail = document.getElementById("modalEmail");
+  const modalError = document.getElementById("modalError");
+
+  function setToast(msg, mode="") {
+    elToast.innerHTML = msg ? msg : "";
+    if(mode === "good") elToast.style.color = "rgba(34,197,94,.95)";
+    else if(mode === "bad") elToast.style.color = "rgba(239,68,68,.95)";
+    else elToast.style.color = "var(--muted)";
+  }
+
+  // ---- Quiz State ----
+  const secondsPerQuestion = 30;
+  let idx = 0;
+  let correct = 0;
+  let score = 0;
+  let timer = null;
+  let timeLeft = secondsPerQuestion;
+  let totalTimeSpent = 0;
+  let finished = false;
+
+  let userTeam = "";   // NEW
+  let userName = "";
+  let userEmail = "";
+
+  function updateStats() {
+    elQ.textContent = `${Math.min(idx+1, QUIZ.length)} / ${QUIZ.length}`;
+    elC.textContent = `${correct}`;  // still maintained (hidden)
+    elT.textContent = `${timeLeft}`;
+    elS.textContent = `${score}`;    // still maintained (hidden)
+    elBar.style.width = `${(idx / QUIZ.length) * 100}%`;
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    timeLeft = secondsPerQuestion;
+    updateStats();
+    timer = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        updateStats();
+        clearInterval(timer);
+        lockAnswers();
+        setTimeout(nextQuestion, 450);
+      } else updateStats();
+    }, 1000);
+  }
+
+  function lockAnswers() {
+    [...document.querySelectorAll("button.answer")].forEach(b => b.disabled = true);
+  }
+
+  function renderQuestion() {
+    setToast("");
+    const q = QUIZ[idx];
+    elTitle.textContent = q.text;
+    elHelp.textContent = "Pick one answer. Faster completion yields a higher score.";
+    elAns.innerHTML = "";
+    q.options.forEach((opt, i) => {
+      const b = document.createElement("button");
+      b.className = "answer";
+      b.type = "button";
+      b.textContent = opt;
+      b.addEventListener("click", () => choose(i, b));
+      elAns.appendChild(b);
+    });
+    startTimer();
+    updateStats();
+  }
+
+  function choose(choiceIndex, btnEl) {
+    const q = QUIZ[idx];
+    lockAnswers();
+    clearInterval(timer);
+    const isCorrect = choiceIndex === q.correctIndex;
+    const remaining = timeLeft;
+
+    if (isCorrect) {
+      correct += 1;
+      score += 100 + (remaining * 3);
+      btnEl.classList.add("good");
+    } else {
+      score += 10;
+      btnEl.classList.add("bad");
+      // Do NOT highlight the correct answer
+    }
+    updateStats();
+    setTimeout(nextQuestion, 650);
+  }
+
+  function nextQuestion() {
+    totalTimeSpent += (secondsPerQuestion - timeLeft);
+    idx += 1;
+    if (idx >= QUIZ.length) return finishQuiz();
+    renderQuestion();
+  }
+
+  function finishQuiz() {
+    clearInterval(timer);
+    finished = true;
+    elBar.style.width = "100%";
+    elTitle.textContent = "Quiz completed";
+    elHelp.textContent = `Thanks! You completed the quiz in ${totalTimeSpent}s.`;
+    elAns.innerHTML = "";
+
+    // Auto-submit immediately (still enforces once-per-week via localStorage)
+    if (hasSubmitted()) {
+      setToast("You have already submitted the quiz this week.", "bad");
+    } else {
+      setToast("Submitting…");
+      submitResult();
+    }
+    updateStats();
+  }
+
+  async function submitResult() {
+    if (hasSubmitted()) {
+      btnSubmit.disabled = true;
+      setToast("You have already submitted the quiz this week.", "bad");
+      return;
+    }
+    if (!finished) {
+      setToast("Finish the quiz before submitting.", "bad");
+      return;
+    }
+
+    const payload = {
+      weekId: getISOWeekId(new Date()),
+      team: userTeam,          // NEW
+      name: userName,
+      email: userEmail,
+      score,
+      correct,
+      time: totalTimeSpent,
+      ts: Date.now(),
+      page: location.href
+    };
+
+    btnSubmit.disabled = true;
+    setToast("Submitting…");
+
+    try {
+      const res = await fetch(POWER_AUTOMATE_POST_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const t = await res.text().catch(()=> "");
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${t}`.slice(0, 300));
+      }
+      markSubmitted();
+      setToast("Submitted. Only one submission is allowed per week.", "good");
+    } catch (e) {
+      btnSubmit.disabled = false;
+      setToast(`Submit failed: <strong>${escapeHtml(e.message)}</strong>`, "bad");
+    }
+  }
+
+  btnSubmit.addEventListener("click", submitResult);
+
+  // Mandatory modal
+  modalForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const team = modalTeam.value;
+    const name = modalName.value.trim();
+    const email = modalEmail.value.trim().toLowerCase();
+
+    if (!team) { modalError.textContent = "Please select your team name."; return; }
+    if (!name) { modalError.textContent = "Please enter your name."; return; }
+    if (!email) { modalError.textContent = "Please enter your email."; return; }
+    if (!isAllowedEmail(email)) {
+      modalError.textContent = `Email must be a valid address ending with @${ALLOWED_DOMAIN}.`;
+      return;
+    }
+
+    modalError.textContent = "";
+    userTeam = team;
+    userName = name;
+    userEmail = email;
+
+    modalBg.style.display = "none";
+    renderQuestion();
+  });
+
+  if (hasSubmitted()) {
+    setToast("You have already submitted the quiz this week.", "bad");
+  }
+  updateStats();
+})();
+</script>
+</body>
+</html>
