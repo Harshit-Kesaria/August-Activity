@@ -162,7 +162,6 @@
       font-size:15px;
       outline:none;
     }
-    /* NEW: dropdown styled like input */
     .modal select {
       width:100%;
       padding:10px 12px;
@@ -178,7 +177,6 @@
       background:#10172a;
       color:var(--text);
     }
-
     .modal .btn { width:100%; font-size:16px; }
     .modal .error {
       color:var(--bad);
@@ -186,17 +184,6 @@
       margin: 2px 0 10px;
       min-height:18px;
       text-align:left;
-    }
-    .modal .hint{
-      color:var(--muted);
-      font-size:12.5px;
-      margin-top:10px;
-      line-height:1.35;
-      text-align:left;
-    }
-    .domain{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      color: rgba(96,165,250,.95);
     }
     /* Hide "Correct" and "Score" from users (still calculated/submitted) */
     .pill.hide { display:none !important; }
@@ -237,7 +224,6 @@
         <h2>Enter your details to begin</h2>
         <div class="error" id="modalError"></div>
 
-        <!-- NEW: Team dropdown -->
         <label for="modalTeam">Team Name</label>
         <select id="modalTeam" required>
           <option value="" selected disabled>Select your team</option>
@@ -254,15 +240,7 @@
         <label for="modalName">Name</label>
         <input id="modalName" type="text" maxlength="60" required autocomplete="name" />
 
-        <label for="modalEmail">Email</label>
-        <input id="modalEmail" type="email" maxlength="80" required autocomplete="email"
-               placeholder="firstname.lastname@syensqo.com" />
-
         <button class="btn" type="submit">Start Quiz</button>
-
-        <div class="hint">
-          Email must end with <span class="domain">@syensqo.com</span>.
-        </div>
       </form>
     </div>
   </div>
@@ -272,7 +250,9 @@
   const POWER_AUTOMATE_POST_URL =
     "https://default5e60f7a7d4104d38b87593ca12adc3.0e.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/899b9a3c914541c0af2719bf77613032/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=orFxomxolOpdOCpoEiZ4V-xVhRuhx8oNCAcIWGHFjCs";
 
-  const ALLOWED_DOMAIN = "syensqo.com";
+  // OPTIONAL but recommended when you have multiple quizzes:
+  // Change to "quiz2" / "quiz3" in those files.
+  const QUIZ_ID = "quiz1";
 
   const QUIZ = [
     {
@@ -317,14 +297,9 @@
     }[m]));
   }
 
-  function isAllowedEmail(email) {
-    const e = String(email || "").trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return false;
-    return e.endsWith("@" + ALLOWED_DOMAIN);
-  }
-
+  // Make "once per week" apply per quiz (so quiz1+quiz2 can both be submitted)
   function submissionKeyForThisWeek() {
-    return `weeklyQuizSubmitted_${getISOWeekId(new Date())}`;
+    return `weeklyQuizSubmitted_${QUIZ_ID}_${getISOWeekId(new Date())}`;
   }
   function hasSubmitted() { return localStorage.getItem(submissionKeyForThisWeek()) === "1"; }
   function markSubmitted() { localStorage.setItem(submissionKeyForThisWeek(), "1"); }
@@ -342,9 +317,8 @@
   const elToast = document.getElementById("toast");
   const modalBg = document.getElementById("modalBg");
   const modalForm = document.getElementById("modalForm");
-  const modalTeam = document.getElementById("modalTeam"); // NEW
+  const modalTeam = document.getElementById("modalTeam");
   const modalName = document.getElementById("modalName");
-  const modalEmail = document.getElementById("modalEmail");
   const modalError = document.getElementById("modalError");
 
   function setToast(msg, mode="") {
@@ -364,9 +338,8 @@
   let totalTimeSpent = 0;
   let finished = false;
 
-  let userTeam = "";   // NEW
+  let userTeam = "";
   let userName = "";
-  let userEmail = "";
 
   function updateStats() {
     elQ.textContent = `${Math.min(idx+1, QUIZ.length)} / ${QUIZ.length}`;
@@ -428,8 +401,8 @@
     } else {
       score += 10;
       btnEl.classList.add("bad");
-      // Do NOT highlight the correct answer
     }
+
     updateStats();
     setTimeout(nextQuestion, 650);
   }
@@ -449,9 +422,9 @@
     elHelp.textContent = `Thanks! You completed the quiz in ${totalTimeSpent}s.`;
     elAns.innerHTML = "";
 
-    // Auto-submit immediately (still enforces once-per-week via localStorage)
+    // Auto-submit immediately
     if (hasSubmitted()) {
-      setToast("You have already submitted the quiz this week.", "bad");
+      setToast("You have already submitted this quiz this week.", "bad");
     } else {
       setToast("Submitting…");
       submitResult();
@@ -462,7 +435,7 @@
   async function submitResult() {
     if (hasSubmitted()) {
       btnSubmit.disabled = true;
-      setToast("You have already submitted the quiz this week.", "bad");
+      setToast("You have already submitted this quiz this week.", "bad");
       return;
     }
     if (!finished) {
@@ -472,9 +445,9 @@
 
     const payload = {
       weekId: getISOWeekId(new Date()),
-      team: userTeam,          // NEW
+      quizId: QUIZ_ID,
+      team: userTeam,
       name: userName,
-      email: userEmail,
       score,
       correct,
       time: totalTimeSpent,
@@ -496,7 +469,7 @@
         throw new Error(`HTTP ${res.status} ${res.statusText} ${t}`.slice(0, 300));
       }
       markSubmitted();
-      setToast("Submitted. Only one submission is allowed per week.", "good");
+      setToast("Submitted. Only one submission is allowed per quiz per week.", "good");
     } catch (e) {
       btnSubmit.disabled = false;
       setToast(`Submit failed: <strong>${escapeHtml(e.message)}</strong>`, "bad");
@@ -511,27 +484,20 @@
 
     const team = modalTeam.value;
     const name = modalName.value.trim();
-    const email = modalEmail.value.trim().toLowerCase();
 
     if (!team) { modalError.textContent = "Please select your team name."; return; }
     if (!name) { modalError.textContent = "Please enter your name."; return; }
-    if (!email) { modalError.textContent = "Please enter your email."; return; }
-    if (!isAllowedEmail(email)) {
-      modalError.textContent = `Email must be a valid address ending with @${ALLOWED_DOMAIN}.`;
-      return;
-    }
 
     modalError.textContent = "";
     userTeam = team;
     userName = name;
-    userEmail = email;
 
     modalBg.style.display = "none";
     renderQuestion();
   });
 
   if (hasSubmitted()) {
-    setToast("You have already submitted the quiz this week.", "bad");
+    setToast("You have already submitted this quiz this week.", "bad");
   }
   updateStats();
 })();
