@@ -162,6 +162,23 @@
       font-size:15px;
       outline:none;
     }
+    /* NEW: dropdown styled like input */
+    .modal select {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      margin-bottom:14px;
+      font-size:15px;
+      outline:none;
+    }
+    .modal select option{
+      background:#10172a;
+      color:var(--text);
+    }
+
     .modal .btn { width:100%; font-size:16px; }
     .modal .error {
       color:var(--bad);
@@ -181,12 +198,10 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       color: rgba(96,165,250,.95);
     }
-
     /* Hide "Correct" and "Score" from users (still calculated/submitted) */
     .pill.hide { display:none !important; }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <header>
@@ -212,7 +227,6 @@
         <div class="row">
           <button class="btn" id="btnSubmit" type="button" disabled>Submit result</button>
         </div>
-
         <div class="toast" id="toast"></div>
       </div>
     </section>
@@ -222,6 +236,20 @@
       <form class="modal" id="modalForm" autocomplete="off">
         <h2>Enter your details to begin</h2>
         <div class="error" id="modalError"></div>
+
+        <!-- NEW: Team dropdown -->
+        <label for="modalTeam">Team Name</label>
+        <select id="modalTeam" required>
+          <option value="" selected disabled>Select your team</option>
+          <option value="Team Fusion Force">Team Fusion Force</option>
+          <option value="Team SyKnights">Team SyKnights</option>
+          <option value="Team Sparks">Team Sparks</option>
+          <option value="Team Kings">Team Kings</option>
+          <option value="Team Vibe Sprint">Team Vibe Sprint</option>
+          <option value="Team Ninjas">Team Ninjas</option>
+          <option value="Team Untitled">Team Untitled</option>
+          <option value="Team Mavericks">Team Mavericks</option>
+        </select>
 
         <label for="modalName">Name</label>
         <input id="modalName" type="text" maxlength="60" required autocomplete="name" />
@@ -243,27 +271,18 @@
 (() => {
   const POWER_AUTOMATE_POST_URL =
     "https://default5e60f7a7d4104d38b87593ca12adc3.0e.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/899b9a3c914541c0af2719bf77613032/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=orFxomxolOpdOCpoEiZ4V-xVhRuhx8oNCAcIWGHFjCs";
+
   const ALLOWED_DOMAIN = "syensqo.com";
 
   const QUIZ = [
     {
       text: "Which is the largest ocean in the world?",
-      options: [
-        "Atlantic Ocean",
-        "Indian Ocean",
-        "Pacific Ocean",
-        "Arctic Ocean"
-      ],
+      options: ["Atlantic Ocean","Indian Ocean","Pacific Ocean","Arctic Ocean"],
       correctIndex: 2
     },
     {
       text: "What is the chemical formula of common salt?",
-      options: [
-        "H2O",
-        "CO2",
-        "NACL",
-        "O2"
-      ],
+      options: ["H2O","CO2","NACL","O2"],
       correctIndex: 2
     },
     {
@@ -323,6 +342,7 @@
   const elToast = document.getElementById("toast");
   const modalBg = document.getElementById("modalBg");
   const modalForm = document.getElementById("modalForm");
+  const modalTeam = document.getElementById("modalTeam"); // NEW
   const modalName = document.getElementById("modalName");
   const modalEmail = document.getElementById("modalEmail");
   const modalError = document.getElementById("modalError");
@@ -343,6 +363,8 @@
   let timeLeft = secondsPerQuestion;
   let totalTimeSpent = 0;
   let finished = false;
+
+  let userTeam = "";   // NEW
   let userName = "";
   let userEmail = "";
 
@@ -396,7 +418,6 @@
     const q = QUIZ[idx];
     lockAnswers();
     clearInterval(timer);
-
     const isCorrect = choiceIndex === q.correctIndex;
     const remaining = timeLeft;
 
@@ -409,7 +430,6 @@
       btnEl.classList.add("bad");
       // Do NOT highlight the correct answer
     }
-
     updateStats();
     setTimeout(nextQuestion, 650);
   }
@@ -423,22 +443,21 @@
 
   function finishQuiz() {
     clearInterval(timer);
-  finished = true;
-  elBar.style.width = "100%";
-  elTitle.textContent = "Quiz completed";
-  elHelp.textContent = `Thanks! You completed the quiz in ${totalTimeSpent}s.`;
-  elAns.innerHTML = "";
+    finished = true;
+    elBar.style.width = "100%";
+    elTitle.textContent = "Quiz completed";
+    elHelp.textContent = `Thanks! You completed the quiz in ${totalTimeSpent}s.`;
+    elAns.innerHTML = "";
 
-  // Auto-submit immediately (still enforces once-per-week via localStorage)
-  if (hasSubmitted()) {
-    setToast("You have already submitted the quiz this week.", "bad");
-  } else {
-    setToast("Submitting…");
-    submitResult();
+    // Auto-submit immediately (still enforces once-per-week via localStorage)
+    if (hasSubmitted()) {
+      setToast("You have already submitted the quiz this week.", "bad");
+    } else {
+      setToast("Submitting…");
+      submitResult();
+    }
+    updateStats();
   }
-
-  updateStats();
-}
 
   async function submitResult() {
     if (hasSubmitted()) {
@@ -453,6 +472,7 @@
 
     const payload = {
       weekId: getISOWeekId(new Date()),
+      team: userTeam,          // NEW
       name: userName,
       email: userEmail,
       score,
@@ -488,9 +508,12 @@
   // Mandatory modal
   modalForm.addEventListener("submit", (e) => {
     e.preventDefault();
+
+    const team = modalTeam.value;
     const name = modalName.value.trim();
     const email = modalEmail.value.trim().toLowerCase();
 
+    if (!team) { modalError.textContent = "Please select your team name."; return; }
     if (!name) { modalError.textContent = "Please enter your name."; return; }
     if (!email) { modalError.textContent = "Please enter your email."; return; }
     if (!isAllowedEmail(email)) {
@@ -499,8 +522,10 @@
     }
 
     modalError.textContent = "";
+    userTeam = team;
     userName = name;
     userEmail = email;
+
     modalBg.style.display = "none";
     renderQuestion();
   });
