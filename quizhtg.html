@@ -252,36 +252,61 @@
 
   // OPTIONAL but recommended when you have multiple quizzes:
   // Change to "quiz2" / "quiz3" in those files.
-  const QUIZ_ID = "quiz1";
+  const QUIZ_ID = "quiz2";
 
   const QUIZ = [
-    {
-      text: "Which is the largest ocean in the world?",
-      options: ["Atlantic Ocean","Indian Ocean","Pacific Ocean","Arctic Ocean"],
-      correctIndex: 2
-    },
-    {
-      text: "What is the chemical formula of common salt?",
-      options: ["H2O","CO2","NACL","O2"],
-      correctIndex: 2
-    },
-    {
-      text: "Which is the smallest prime number?",
-      options: ["0", "1", "2", "3"],
-      correctIndex: 2
-    },
-    {
-      text: "What is the value of 9 X 8?",
-      options: ["64", "72", "81", "89"],
-      correctIndex: 1
-    },
-    {
-      text: "Which continent is known as the Dark Continent?",
-      options: ["Africa", "Europe", "Asia", "South America"],
-      correctIndex: 0
-    }
-  ];
-
+  {
+    text: "Who is known as the “Father of the Indian Nation”?",
+    options: ["Jawaharlal Nehru", "Mahatma Gandhi", "Subhas Chandra Bose", "B. R. Ambedkar"],
+    correctIndex: 1
+  },
+  {
+    text: "The Industrial Revolution began in:",
+    options: ["France", "Germany", "Britain", "Russia"],
+    correctIndex: 2
+  },
+  {
+    text: "The Revolt of 1857 is also known as:",
+    options: ["Civil Disobedience Movement", "Quit India Movement", "First War of Indian Independence", "Non-Cooperation Movement"],
+    correctIndex: 2
+  },
+  {
+    text: "The Tropic of Cancer passes through which of these countries?",
+    options: ["Canada", "India", "Australia", "Argentina"],
+    correctIndex: 1
+  },
+  {
+    text: "The largest continent by area is:",
+    options: ["Africa", "Europe", "Asia", "Antarctica"],
+    correctIndex: 2
+  },
+  {
+    text: "The layer of the atmosphere closest to Earth’s surface is:",
+    options: ["Stratosphere", "Mesosphere", "Troposphere", "Exosphere"],
+    correctIndex: 2
+  },
+  {
+    text: "An example of a renewable resource is:",
+    options: ["Coal", "Petroleum", "Natural gas", "Solar energy"],
+    correctIndex: 3
+  },
+  {
+    text: "Which instrument is used to measure atmospheric pressure?",
+    options: ["Thermometer", "Barometer", "Hygrometer", "Anemometer"],
+    correctIndex: 1
+  },
+  {
+    text: "The “Dandi March” (Salt March) took place in:",
+    options: ["1919", "1920", "1930", "1942"],
+    correctIndex: 2
+  },
+  {
+    text: "The policy of “Doctrine of Lapse” is most associated with:",
+    options: ["Lord Curzon", "Lord Dalhousie", "Lord Mountbatten", "Warren Hastings"],
+    correctIndex: 1
+  }
+];
+  
   function getISOWeekId(d) {
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     const dayNum = date.getUTCDay() || 7;
